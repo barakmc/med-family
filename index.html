@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
+<meta name="theme-color" content="#ffffff"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<meta name="apple-mobile-web-app-title" content="תרופות"/>
+<title>תרופות שיתופי</title>
+<style>
+:root{--green:#2cc5a1;--green-bg:#edfaf6;--dark:#111;--mid:#666;--soft:#AAA;--border:#EBEBEB;--card-bg:#fff;--page-bg:#F7F8FA;}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:-apple-system,'SF Pro Text','Segoe UI',sans-serif;background:var(--page-bg);min-height:100vh;color:var(--dark);overscroll-behavior:none;}
+button,input{font-family:inherit;}
+svg{display:block;flex-shrink:0;}
+
+#header{background:#fff;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:20;}
+#header-inner{padding:18px 20px 0;}
+#header-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+#logo{display:flex;align-items:center;gap:10px;}
+#logo-icon{width:38px;height:38px;background:var(--green-bg);border-radius:11px;display:flex;align-items:center;justify-content:center;}
+#app-name{font-size:19px;font-weight:700;letter-spacing:-0.3px;}
+#app-sub{font-size:12px;color:var(--soft);margin-top:1px;}
+#lang-toggle{display:flex;align-items:center;background:#F2F2F2;border-radius:20px;padding:3px;gap:2px;}
+.lang-opt{padding:6px 13px;border-radius:17px;font-size:13px;font-weight:600;color:var(--soft);background:transparent;border:none;cursor:pointer;transition:all .15s;font-family:inherit;}
+.lang-opt.active{background:#fff;color:var(--dark);box-shadow:0 1px 4px rgba(0,0,0,.1);}
+#tabs{display:flex;}
+.tab-btn{flex:1;padding:11px 4px;border:none;background:transparent;color:var(--soft);font-size:13px;font-weight:500;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;border-bottom:2px solid transparent;transition:all .15s;}
+.tab-btn.active{color:var(--green);border-bottom-color:var(--green);font-weight:600;}
+
+#list{max-width:480px;margin:0 auto;padding:20px 16px 120px;}
+.section-label{font-size:12px;color:var(--soft);font-weight:500;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:14px;}
+.med-card{background:var(--card-bg);border-radius:16px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.05),0 4px 12px rgba(0,0,0,.04);display:flex;align-items:center;cursor:pointer;transition:transform .15s;border:1px solid #F0F0F0;overflow:hidden;}
+.med-card:active{transform:scale(.98);}
+.med-accent{width:4px;min-height:80px;background:var(--green);flex-shrink:0;}
+.med-icon-wrap{width:56px;height:56px;margin:0 14px;border-radius:12px;background:#3a3a3a;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;}
+.med-icon-wrap img{width:100%;height:100%;object-fit:cover;border-radius:12px;}
+.med-body{flex:1;min-width:0;padding:16px 0;}
+.med-name{font-size:16px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.med-dose-line{font-size:13px;color:var(--soft);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.med-tags{display:flex;align-items:center;gap:6px;margin-top:7px;flex-wrap:wrap;}
+.tag{display:inline-flex;align-items:center;gap:4px;padding:4px 9px;border-radius:20px;font-size:12px;font-weight:500;line-height:1;}
+.tag-time{background:var(--green-bg);color:#1a9978;}
+.tag-stomach{background:#F5F5F5;color:var(--mid);}
+.med-chevron{margin:0 10px;}
+.empty-state{text-align:center;padding:60px 20px;}
+.empty-title{font-size:16px;font-weight:600;color:#CCC;margin-top:14px;}
+.empty-sub{font-size:13px;color:#DDD;margin-top:4px;}
+
+#fab{position:fixed;bottom:32px;left:50%;transform:translateX(-50%);background:var(--green);color:#fff;border:none;border-radius:28px;padding:15px 28px;font-size:16px;font-weight:600;display:flex;align-items:center;gap:9px;box-shadow:0 4px 20px rgba(44,197,161,.4);cursor:pointer;z-index:50;transition:transform .15s;}
+#fab:active{transform:translateX(-50%) scale(.96);}
+
+#overlay{position:fixed;inset:0;background:rgba(0,0,0,.3);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);display:flex;align-items:flex-end;justify-content:center;z-index:100;opacity:0;pointer-events:none;transition:opacity .2s;}
+#overlay.open{opacity:1;pointer-events:all;}
+#sheet{background:#fff;border-radius:22px 22px 0 0;width:100%;max-width:520px;max-height:92vh;overflow-y:auto;transform:translateY(100%);transition:transform .28s cubic-bezier(.32,1,.32,1);padding-bottom:calc(32px + env(safe-area-inset-bottom,0));}
+#overlay.open #sheet{transform:translateY(0);}
+#banner{height:160px;position:relative;overflow:hidden;border-radius:22px 22px 0 0;display:flex;align-items:center;justify-content:center;background:#3a3a3a;}
+#banner-img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;display:none;}
+#banner-icon-wrap{display:flex;align-items:center;justify-content:center;position:relative;z-index:1;}
+#close-btn{position:absolute;top:14px;right:14px;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.15);border:none;display:flex;align-items:center;justify-content:center;color:#fff;cursor:pointer;z-index:2;}
+#img-actions{position:absolute;bottom:12px;display:none;gap:8px;width:100%;justify-content:center;z-index:2;}
+.img-label{background:rgba(255,255,255,.95);border-radius:20px;padding:7px 16px;font-size:13px;font-weight:600;color:#333;display:inline-flex;align-items:center;gap:6px;cursor:pointer;box-shadow:0 1px 6px rgba(0,0,0,.15);-webkit-user-select:none;user-select:none;position:relative;}
+.img-label input{position:absolute;opacity:0;width:100%;height:100%;top:0;left:0;cursor:pointer;}
+.img-label:active{transform:scale(.96);}
+#handle{display:flex;justify-content:center;padding:10px 0 2px;}
+#handle-bar{width:36px;height:4px;background:#E5E5E5;border-radius:4px;}
+#sheet-content{padding:10px 22px 0;}
+
+.view-hd{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px;}
+.view-name{font-size:22px;font-weight:700;letter-spacing:-0.3px;}
+.view-sub{font-size:13px;color:var(--soft);margin-top:2px;}
+.edit-btn{background:var(--green-bg);color:#1a9978;border:none;border-radius:20px;padding:8px 16px;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:5px;cursor:pointer;flex-shrink:0;}
+.detail-row{border-top:1px solid #F2F2F2;padding:15px 0;display:flex;align-items:center;gap:14px;}
+.detail-ico{width:36px;height:36px;border-radius:10px;background:#F7F8FA;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.detail-label{font-size:12px;color:var(--soft);margin-bottom:3px;}
+.detail-val{font-size:16px;font-weight:600;}
+.stomach-pill{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:20px;font-size:14px;font-weight:500;margin-top:4px;background:#F5F5F5;color:#555;}
+.times-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;}
+.time-badge{background:var(--green-bg);color:#1a9978;border-radius:20px;padding:4px 10px;font-size:14px;font-weight:600;}
+
+.pin-wrap{text-align:center;padding:24px 0 8px;}
+.pin-title{font-size:19px;font-weight:700;margin-bottom:4px;}
+.pin-hint{font-size:13px;color:var(--soft);margin-bottom:28px;}
+#pin-boxes{display:flex;gap:12px;justify-content:center;margin-bottom:10px;}
+.pin-box{width:60px;height:68px;border-radius:14px;border:1.5px solid #E5E5E5;background:#FAFAFA;text-align:center;font-size:28px;font-weight:700;outline:none;caret-color:transparent;-webkit-text-security:disc;transition:border-color .15s,background .15s;}
+.pin-box:focus{border-color:var(--green);background:var(--green-bg);}
+.pin-box.error{border-color:#FF453A;background:#FFF5F5;color:#FF453A;}
+@keyframes pinShake{0%,100%{transform:translateX(0)}20%{transform:translateX(-7px)}40%{transform:translateX(7px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+.shake{animation:pinShake .38s;}
+#pin-err{min-height:20px;font-size:13px;color:#FF453A;font-weight:600;margin-bottom:16px;}
+.pin-cancel{background:none;border:none;font-size:14px;color:var(--soft);padding:8px 14px;cursor:pointer;}
+
+.edit-heading{font-size:19px;font-weight:700;margin-bottom:20px;}
+.f-label{font-size:11px;color:#999;margin-bottom:6px;letter-spacing:0.5px;text-transform:uppercase;font-weight:500;}
+.f-input{width:100%;padding:13px 14px;border-radius:12px;border:1.5px solid var(--border);background:#FAFAFA;font-size:16px;color:var(--dark);outline:none;font-family:inherit;margin-bottom:16px;transition:border-color .15s;}
+.f-input:focus{border-color:var(--green);background:#fff;}
+.tog-row{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
+.tog{flex:1;min-width:80px;padding:11px 6px;border-radius:11px;border:1.5px solid var(--border);background:#FAFAFA;color:var(--soft);font-size:13px;font-weight:500;font-family:inherit;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:5px;}
+.tog.on{border-color:var(--green);background:var(--green-bg);color:#1a9978;font-weight:600;}
+.tog:disabled{opacity:0.45;cursor:default;}
+
+/* Times editor */
+.times-editor{margin-bottom:16px;}
+.time-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.time-row .f-input{margin-bottom:0;flex:1;}
+.time-del{width:38px;height:46px;border-radius:10px;border:1.5px solid #FFD5D5;background:#FFF5F5;color:#FF453A;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.btn-add-time{width:100%;padding:11px;border-radius:11px;border:1.5px dashed var(--border);background:transparent;color:var(--green);font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:16px;}
+
+.edit-actions{display:flex;gap:10px;margin-top:10px;}
+.btn-cancel{flex:1;padding:15px;border-radius:14px;border:1.5px solid var(--border);background:#fff;font-size:15px;font-weight:600;color:var(--mid);font-family:inherit;cursor:pointer;}
+.btn-save{flex:2;padding:15px;border-radius:14px;background:var(--green);border:none;font-size:15px;font-weight:600;color:#fff;font-family:inherit;cursor:pointer;}
+.btn-delete{width:100%;margin-top:12px;padding:14px;border-radius:14px;background:#FFF5F5;border:1.5px solid #FFD5D5;font-size:15px;font-weight:600;color:#FF453A;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;}
+
+#delete-confirm{position:fixed;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:200;opacity:0;pointer-events:none;transition:opacity .18s;padding:24px;}
+#delete-confirm.open{opacity:1;pointer-events:all;}
+#delete-box{background:#fff;border-radius:20px;padding:28px 24px 20px;width:100%;max-width:320px;text-align:center;}
+#delete-box .d-icon{font-size:36px;margin-bottom:12px;}
+#delete-box .d-title{font-size:18px;font-weight:700;margin-bottom:6px;}
+#delete-box .d-sub{font-size:14px;color:#AAA;margin-bottom:24px;}
+#delete-box .d-btns{display:flex;gap:10px;}
+#delete-box .d-cancel{flex:1;padding:13px;border-radius:13px;border:1.5px solid #EBEBEB;background:#fff;font-size:15px;font-weight:600;color:#666;cursor:pointer;font-family:inherit;}
+#delete-box .d-confirm{flex:1;padding:13px;border-radius:13px;background:#FF453A;border:none;font-size:15px;font-weight:600;color:#fff;cursor:pointer;font-family:inherit;}
+</style>
+<!-- Add Supabase SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+<div id="header">
+  <div id="header-inner">
+    <div id="header-top">
+      <div id="logo">
+        <div id="logo-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2cc5a1" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/></svg>
+        </div>
+        <div><div id="app-name"></div><div id="app-sub"></div></div>
+      </div>
+      <div id="lang-toggle" onclick="toggleLang()">
+        <button class="lang-opt" id="lang-he">עב</button>
+        <button class="lang-opt" id="lang-en">EN</button>
+      </div>
+    </div>
+  </div>
+  <div id="tabs">
+    <button class="tab-btn" data-tab="morning" onclick="setTab('morning')">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      <span id="tab-morning-label"></span>
+    </button>
+    <button class="tab-btn" data-tab="noon" onclick="setTab('noon')">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M17 18a5 5 0 0 0-10 0"/><path d="M12 2v9"/><path d="m4.22 10.22 1.42 1.42M1 18h2M21 18h2m-2.64-7.78 1.42 1.42"/></svg>
+      <span id="tab-noon-label"></span>
+    </button>
+    <button class="tab-btn" data-tab="evening" onclick="setTab('evening')">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      <span id="tab-evening-label"></span>
+    </button>
+  </div>
+</div>
+
+<!-- Main app content -->
+<div id="app-content">
+  <div id="list"></div>
+  <button id="fab" onclick="openNew()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+    <span id="fab-label"></span>
+  </button>
+</div>
+
+<div id="overlay" onclick="overlayClick(event)">
+  <div id="sheet">
+    <div id="banner">
+      <img id="banner-img" src="" alt=""/>
+      <div id="banner-icon-wrap"></div>
+      <button id="close-btn" onclick="closeSheet()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+      <div id="img-actions">
+        <label class="img-label">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          <span>📷 צלם</span>
+          <input type="file" accept="image/*" capture="environment" onchange="handleImageFile(event)"/>
+        </label>
+        <label class="img-label">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+          <span id="gallery-label">🖼 גלריה</span>
+          <input type="file" accept="image/*" onchange="handleImageFile(event)"/>
+        </label>
+      </div>
+    </div>
+    <div id="handle"><div id="handle-bar"></div></div>
+    <div id="sheet-content"></div>
+  </div>
+</div>
+
+<div id="delete-confirm">
+  <div id="delete-box">
+    <div class="d-icon">🗑</div>
+    <div class="d-title" id="d-title"></div>
+    <div class="d-sub" id="d-sub"></div>
+    <div class="d-btns">
+      <button class="d-cancel" onclick="closeDeleteConfirm()" id="d-cancel-btn"></button>
+      <button class="d-confirm" onclick="confirmDelete()" id="d-confirm-btn"></button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Supabase Connection ─────────────────────────────────────────────
+const SUPABASE_URL = 'https://zgiylhyqwuarauxmswbd.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpnaXlsaHlxd3VhcmF1eG1zd2JkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIxNzAwNTYsImV4cCI6MjA4Nzc0NjA1Nn0.DHqK-6pBISLhNzTUldvabvabFuADip1XeR5VCXJqy5o';
+
+const { createClient } = supabase;
+const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ── Language and Constants ────────────────────────────────────────────
+const PASSCODE = "1234";
+
+const T = {
+  he:{
+    dir:"rtl",lang:"he",
+    appName:"תרופות שיתופי",appSub:"משותף למשפחה",
+    morning:"בוקר",noon:"צהריים",evening:"ערב",
+    sectionDate:(d)=>d.toLocaleDateString("he-IL",{weekday:"long",day:"numeric",month:"long"}),
+    empty:"אין תרופות לזמן זה",emptySub:"הוסף תרופה חדשה",
+    editBtn:"עריכה",addBtn:"הוסף תרופה",
+    timeLabel:"שעות נטילה",doseLabel:"מינון",intakeLabel:"מצב נטילה",
+    stomachEmpty:"על בטן ריקה",stomachFull:"עם אוכל",stomachAfter:"אחרי אוכל",
+    pinTitle:"הזן סיסמה",pinHint:"Enter 4-digit passcode",
+    pinCancel:"ביטול",pinWrong:"סיסמה שגויה",
+    editHeading:"עריכת תרופה",addHeading:"תרופה חדשה",
+    fNamePrimary:"שם בעברית",fNameSecondary:"שם באנגלית",
+    fDose:"מינון",fTimes:"שעות נטילה",addTime:"+ הוסף שעה",
+    fIntake:"מצב נטילה",fTab:"זמן ביום",
+    cancel:"ביטול",save:"שמור",deleteBtn:"מחק תרופה",
+    nameKey:"nameHe",nameSecKey:"nameEn",inputDir:"rtl",
+  },
+  en:{
+    dir:"ltr",lang:"en",
+    appName:"Family Meds",appSub:"Shared with family",
+    morning:"Morning",noon:"Noon",evening:"Evening",
+    sectionDate:(d)=>d.toLocaleDateString("en-US",{weekday:"long",day:"numeric",month:"long"}),
+    empty:"No medications",emptySub:"Add a new medication",
+    editBtn:"Edit",addBtn:"Add Medication",
+    timeLabel:"Times",doseLabel:"Dose",intakeLabel:"Intake",
+    stomachEmpty:"Empty stomach",stomachFull:"With food",stomachAfter:"After food",
+    pinTitle:"Enter Passcode",pinHint:"Enter 4-digit passcode",
+    pinCancel:"Cancel",pinWrong:"Wrong passcode",
+    editHeading:"Edit Medication",addHeading:"New Medication",
+    fNamePrimary:"English name",fNameSecondary:"Hebrew name",
+    fDose:"Dose",fTimes:"Times",addTime:"+ Add time",
+    fIntake:"Intake",fTab:"Time of day",
+    cancel:"Cancel",save:"Save",deleteBtn:"Delete Medication",
+    nameKey:"nameEn",nameSecKey:"nameHe",inputDir:"ltr",
+  }
+};
+
+const IC = {
+  pill:(c,s=22)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/></svg>`,
+  clock:`<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1a9978" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>`,
+  clock_d:`<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>`,
+  pill_d:`<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/></svg>`,
+  se:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>`,
+  sf:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/></svg>`,
+  sa:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20M12 12h9"/></svg>`,
+  edit:`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg>`,
+  lock:`<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#2cc5a1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`,
+  trash:`<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>`,
+  plus:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>`,
+  x:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>`,
+  chevL:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#CCC" stroke-width="1.8" stroke-linecap="round"><path d="m15 18-6-6 6-6"/></svg>`,
+  chevR:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#CCC" stroke-width="1.8" stroke-linecap="round"><path d="m9 18 6-6-6-6"/></svg>`,
+  sun:`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>`,
+  moon:`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`,
+  noon:`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M17 18a5 5 0 0 0-10 0"/><path d="M12 2v9"/><path d="m4.22 10.22 1.42 1.42M1 18h2M21 18h2m-2.64-7.78 1.42 1.42"/></svg>`,
+  empty_ic:`<svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#DDD" stroke-width="1.4" stroke-linecap="round"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/></svg>`,
+};
+
+// ── Helpers ────────────────────────────────────────────────────────────
+function stomachIcon(s){ return s==="empty"?IC.se:s==="after"?IC.sa:IC.sf; }
+function stomachLabel(s){ return s==="empty"?t.stomachEmpty:s==="after"?t.stomachAfter:t.stomachFull; }
+function timeToTab(time){ const h=parseInt(time,10); return h>=5&&h<12?"morning":h>=12&&h<18?"noon":"evening"; }
+function tabsFromTimes(times){ return [...new Set(times.filter(Boolean).map(timeToTab))]; }
+function esc(s){ return String(s||"").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;"); }
+function getAutoTab(){ const h=new Date().getHours(); return h>=5&&h<12?"morning":h>=12&&h<18?"noon":"evening"; }
+
+// ── State ──────────────────────────────────────────────────────────────
+let lang = localStorage.getItem("lang")||"he";
+let t = T[lang];
+let meds = [];
+let activeTab = getAutoTab();
+let selectedId = null, editData = null, mode = "view";
+
+// ── Load from Supabase ─────────────────────────────────────────────────
+async function loadMeds() {
+  const { data, error } = await supabaseClient
+    .from('medications')
+    .select('*');
+  
+  if (error) {
+    console.error('Error loading:', error);
+    return;
+  }
+  
+  meds = data || [];
+  renderList();
+}
+
+// Listen for real-time updates
+supabaseClient
+  .channel('medications')
+  .on('postgres_changes', { event: '*', schema: 'public', table: 'medications' }, 
+    () => { loadMeds(); }
+  )
+  .subscribe();
+
+// ── Save to Supabase ───────────────────────────────────────────────────
+async function saveMed(med) {
+  const { error } = await supabaseClient
+    .from('medications')
+    .upsert(med);
+  
+  if (error) console.error('Error saving:', error);
+}
+
+async function deleteMed(id) {
+  const { error } = await supabaseClient
+    .from('medications')
+    .delete()
+    .eq('id', id);
+  
+  if (error) console.error('Error deleting:', error);
+}
+
+// ── Language ───────────────────────────────────────────────────────────
+function applyLang(){
+  t = T[lang];
+  document.documentElement.setAttribute("dir", t.dir);
+  document.documentElement.setAttribute("lang", t.lang);
+  document.body.style.direction = t.dir;
+  document.getElementById("app-name").textContent = t.appName;
+  document.getElementById("app-sub").textContent = t.appSub;
+  document.getElementById("lang-he").classList.toggle("active", lang === "he");
+  document.getElementById("lang-en").classList.toggle("active", lang === "en");
+  document.getElementById("tab-morning-label").textContent = t.morning;
+  document.getElementById("tab-noon-label").textContent = t.noon;
+  document.getElementById("tab-evening-label").textContent = t.evening;
+  document.getElementById("fab-label").textContent = t.addBtn;
+  const gl = document.getElementById("gallery-label"); if(gl) gl.textContent = "🖼 " + t.fTimes;
+  renderList();
+  if(selectedId !== null) renderSheet();
+}
+
+function toggleLang(){ lang = lang === "he" ? "en" : "he"; localStorage.setItem("lang", lang); applyLang(); }
+
+// ── Tabs ───────────────────────────────────────────────────────────────
+function setTab(tab){
+  activeTab = tab;
+  document.querySelectorAll(".tab-btn").forEach(b => b.classList.toggle("active", b.dataset.tab === tab));
+  renderList();
+}
+
+// ── List ───────────────────────────────────────────────────────────────
+function renderList(){
+  const el = document.getElementById("list");
+  const f = meds.filter(m => (m.tabs || [m.tab]).includes(activeTab));
+  
+  if(!f.length){
+    el.innerHTML = `<div class="empty-state">${IC.empty_ic}<div class="empty-title">${t.empty}</div><div class="empty-sub">${t.emptySub}</div></div>`;
+    return;
+  }
+  
+  const dateStr = t.sectionDate(new Date());
+  const chev = t.dir === "rtl" ? IC.chevL : IC.chevR;
+  
+  el.innerHTML = `<div class="section-label">${dateStr}</div>` + f.map(m => {
+    const times = m.times || [m.time];
+    const tabTimes = times.filter(ti => timeToTab(ti) === activeTab);
+    const displayTimes = tabTimes.length ? tabTimes : times;
+    return `
+    <div class="med-card" onclick="openCard(${m.id})">
+      <div class="med-accent"></div>
+      <div class="med-icon-wrap">${m.image ? `<img src="${m.image}" alt=""/>` : IC.pill("#888", 24)}</div>
+      <div class="med-body">
+        <div class="med-name">${m[t.nameKey]}</div>
+        <div class="med-dose-line">${m[t.nameSecKey]} · ${m.dose}</div>
+        <div class="med-tags">
+          ${displayTimes.map(ti => `<span class="tag tag-time">${IC.clock} ${ti}</span>`).join("")}
+          <span class="tag tag-stomach">${stomachIcon(m.stomach)} ${stomachLabel(m.stomach)}</span>
+        </div>
+      </div>
+      <div class="med-chevron">${chev}</div>
+    </div>`}).join("");
+}
+
+// ── Sheet ──────────────────────────────────────────────────────────────
+function openCard(id){ selectedId = id; mode = "view"; showSheet(); }
+
+function openNew(){
+  selectedId = null;
+  const newId = Date.now();
+  editData = {id: newId, nameHe: "", nameEn: "", times: ["08:00"], tabs: ["morning"], dose: "", stomach: "empty", image: null};
+  mode = "pin-new"; showSheet();
+}
+
+function showSheet(){ renderSheet(); document.getElementById("overlay").classList.add("open"); }
+
+function closeSheet(){
+  document.getElementById("overlay").classList.remove("open");
+  setTimeout(()=>{ selectedId = null; editData = null; mode = "view"; }, 300);
+}
+
+function overlayClick(e){ if(e.target === document.getElementById("overlay")) closeSheet(); }
+
+function renderSheet(){
+  const med = selectedId !== null ? meds.find(m => m.id === selectedId) : null;
+  const cur = (mode === "edit" || mode === "new") && editData ? editData : med;
+  const bi = document.getElementById("banner-img");
+  const bw = document.getElementById("banner-icon-wrap");
+  const img = cur && cur.image;
+  
+  if(img){ bi.src = img; bi.style.display = "block"; bw.style.display = "none"; }
+  else{ bi.style.display = "none"; bw.style.display = "flex"; bw.innerHTML = IC.pill("#888", 56); }
+  
+  const isEdit = mode === "edit" || mode === "new";
+  document.getElementById("img-actions").style.display = isEdit ? "flex" : "none";
+  document.getElementById("sheet").style.direction = t.dir;
+  
+  const c = document.getElementById("sheet-content");
+  if(mode === "view") c.innerHTML = renderView(med);
+  else if(mode === "pin" || mode === "pin-new") c.innerHTML = renderPin();
+  else c.innerHTML = renderEditForm(editData, mode === "new");
+  
+  if(mode === "pin" || mode === "pin-new") attachPin();
+  if(mode === "edit" || mode === "new") attachEditListeners();
+}
+
+// ── View ───────────────────────────────────────────────────────────────
+function renderView(m){
+  if (!m) return '';
+  const times = m.times || [m.time];
+  return `
+    <div class="view-hd">
+      <div><div class="view-name">${m[t.nameKey]}</div><div class="view-sub">${m[t.nameSecKey]}</div></div>
+      <button class="edit-btn" onclick="mode='pin';renderSheet()">${IC.edit} ${t.editBtn}</button>
+    </div>
+    <div class="detail-row">
+      <div class="detail-ico">${IC.clock_d}</div>
+      <div><div class="detail-label">${t.timeLabel}</div>
+        <div class="times-row">${times.map(ti => `<span class="time-badge">${ti}</span>`).join("")}</div>
+      </div>
+    </div>
+    <div class="detail-row">
+      <div class="detail-ico">${IC.pill_d}</div>
+      <div><div class="detail-label">${t.doseLabel}</div><div class="detail-val">${m.dose}</div></div>
+    </div>
+    <div class="detail-row">
+      <div class="detail-ico">${stomachIcon(m.stomach)}</div>
+      <div><div class="detail-label">${t.intakeLabel}</div>
+        <div class="stomach-pill">${stomachIcon(m.stomach)} ${stomachLabel(m.stomach)}</div>
+      </div>
+    </div>`;
+}
+
+// ── PIN ────────────────────────────────────────────────────────────────
+function renderPin(){
+  return `<div class="pin-wrap">
+    <div style="display:flex;justify-content:center;margin-bottom:14px">${IC.lock}</div>
+    <div class="pin-title">${t.pinTitle}</div>
+    <div class="pin-hint">${t.pinHint}</div>
+    <div id="pin-boxes">
+      <input class="pin-box" type="tel" inputmode="numeric" maxlength="1" id="p0"/>
+      <input class="pin-box" type="tel" inputmode="numeric" maxlength="1" id="p1"/>
+      <input class="pin-box" type="tel" inputmode="numeric" maxlength="1" id="p2"/>
+      <input class="pin-box" type="tel" inputmode="numeric" maxlength="1" id="p3"/>
+    </div>
+    <div id="pin-err"></div>
+    <button class="pin-cancel" onclick="mode==='pin-new'?closeSheet():(mode='view',renderSheet())">${t.pinCancel}</button>
+  </div>`;
+}
+
+function attachPin(){
+  setTimeout(()=>document.getElementById("p0")?.focus(), 80);
+  [0,1,2,3].forEach(i=>{
+    const b = document.getElementById("p"+i); if(!b) return;
+    b.addEventListener("input", e=>{
+      const v = e.target.value.replace(/\D/g, "").slice(-1); b.value = v;
+      if(v && i < 3) document.getElementById("p"+(i+1)).focus();
+      if(v && i === 3) checkPin();
+    });
+    b.addEventListener("keydown", e=>{ if(e.key === "Backspace" && !b.value && i > 0) document.getElementById("p"+(i-1)).focus(); });
+    b.addEventListener("paste", e=>{
+      const txt = (e.clipboardData || window.clipboardData).getData("text").replace(/\D/g, "").slice(0,4);
+      if(txt.length === 4){[0,1,2,3].forEach(j=>{const x = document.getElementById("p"+j); if(x) x.value = txt[j];}); checkPin();}
+      e.preventDefault();
+    });
+  });
+}
+
+function checkPin(){
+  const code = [0,1,2,3].map(i => document.getElementById("p"+i)?.value || "").join("");
+  if(code === PASSCODE){
+    if(mode === "pin-new"){ mode = "new"; renderSheet(); }
+    else{ 
+      const med = meds.find(m => m.id === selectedId);
+      if (med) {
+        editData = {...med};
+        editData.times = [...(editData.times || [editData.time])];
+      }
+      mode = "edit"; 
+      renderSheet(); 
+    }
+  } else {
+    const bx = document.getElementById("pin-boxes"), er = document.getElementById("pin-err");
+    [0,1,2,3].forEach(i=>{const b = document.getElementById("p"+i); if(b) b.classList.add("error");});
+    if(er) er.textContent = t.pinWrong;
+    bx.classList.add("shake");
+    setTimeout(()=>{
+      bx.classList.remove("shake");
+      [0,1,2,3].forEach(i=>{const b = document.getElementById("p"+i); if(b){ b.classList.remove("error"); b.value = ""; }});
+      if(er) er.textContent = "";
+      document.getElementById("p0")?.focus();
+    }, 500);
+  }
+}
+
+// ── Edit Form ──────────────────────────────────────────────────────────
+function renderEditForm(d, isNew){
+  const times = d.times || [""];
+  const autoLocked = times.some(Boolean);
+  const tabs = d.tabs || tabsFromTimes(times);
+  const timesHtml = times.map((ti, i) => `
+    <div class="time-row">
+      <input class="f-input" data-time-idx="${i}" type="time" style="direction:ltr;margin-bottom:0;flex:1" value="${ti}" oninput="updateTime(${i}, this.value)"/>
+      ${times.length > 1 ? `<button class="time-del" onclick="removeTime(${i})" type="button">${IC.x}</button>` : ""}
+    </div>`).join("");
+  return `
+    <div class="edit-heading">${isNew ? t.addHeading : t.editHeading}</div>
+    <div class="f-label">${t.fNamePrimary}</div>
+    <input class="f-input" id="f-np" style="direction:${t.inputDir}" value="${esc(d[t.nameKey])}"/>
+    <div class="f-label">${t.fNameSecondary}</div>
+    <input class="f-input" id="f-ns" style="direction:${t.dir === 'rtl' ? 'ltr' : 'rtl'}" value="${esc(d[t.nameSecKey])}"/>
+    <div class="f-label">${t.fDose}</div>
+    <input class="f-input" id="f-dose" style="direction:ltr" value="${esc(d.dose)}"/>
+    <div class="f-label">${t.fTimes}</div>
+    <div class="times-editor" id="times-editor">${timesHtml}</div>
+    <button class="btn-add-time" type="button" onclick="addTime()">${IC.plus} ${t.addTime}</button>
+    <div class="f-label">${t.fTab}</div>
+    <div class="tog-row" id="tab-togs">
+      <button class="tog ${tabs.includes('morning') ? 'on' : ''}" data-tab="morning" onclick="toggleTab('morning')" ${autoLocked ? 'disabled' : ''} type="button">${IC.sun} ${t.morning}</button>
+      <button class="tog ${tabs.includes('noon') ? 'on' : ''}" data-tab="noon" onclick="toggleTab('noon')" ${autoLocked ? 'disabled' : ''} type="button">${IC.noon} ${t.noon}</button>
+      <button class="tog ${tabs.includes('evening') ? 'on' : ''}" data-tab="evening" onclick="toggleTab('evening')" ${autoLocked ? 'disabled' : ''} type="button">${IC.moon} ${t.evening}</button>
+    </div>
+    <div class="f-label">${t.fIntake}</div>
+    <div class="tog-row">
+      <button class="tog ${d.stomach === 'empty' ? 'on' : ''}" onclick="sf('stomach', 'empty')" type="button">${IC.se} ${t.stomachEmpty}</button>
+      <button class="tog ${d.stomach === 'full' ? 'on' : ''}" onclick="sf('stomach', 'full')" type="button">${IC.sf} ${t.stomachFull}</button>
+      <button class="tog ${d.stomach === 'after' ? 'on' : ''}" onclick="sf('stomach', 'after')" type="button">${IC.sa} ${t.stomachAfter}</button>
+    </div>
+    <div class="edit-actions">
+      <button class="btn-cancel" onclick="cancelEdit()" type="button">${t.cancel}</button>
+      <button class="btn-save" onclick="saveEdit()" type="button">${t.save}</button>
+    </div>
+    ${isNew ? "" : `<button class="btn-delete" onclick="deleteMed()" type="button">${IC.trash} ${t.deleteBtn}</button>`}
+  `;
+}
+
+function attachEditListeners(){
+  const np = document.getElementById("f-np"); 
+  if(np) np.addEventListener("input", e => editData[t.nameKey] = e.target.value);
+  
+  const ns = document.getElementById("f-ns"); 
+  if(ns) ns.addEventListener("input", e => editData[t.nameSecKey] = e.target.value);
+  
+  const fd = document.getElementById("f-dose"); 
+  if(fd) fd.addEventListener("input", e => editData.dose = e.target.value);
+}
+
+function updateTime(idx, val){
+  if (editData && editData.times) {
+    editData.times[idx] = val;
+    updateTabsFromTimes();
+  }
+}
+
+function addTime(){
+  if (editData) {
+    readFormIntoEditData();
+    editData.times.push("");
+    reRenderForm();
+  }
+}
+
+function removeTime(idx){
+  if (editData && editData.times) {
+    readFormIntoEditData();
+    editData.times.splice(idx, 1);
+    if(!editData.times.length) editData.times = [""];
+    updateTabsFromTimes();
+    reRenderForm();
+  }
+}
+
+function updateTabsFromTimes(){
+  if (!editData) return;
+  const filled = editData.times.filter(Boolean);
+  if(filled.length){
+    editData.tabs = tabsFromTimes(filled);
+    document.querySelectorAll("#tab-togs .tog").forEach(b => {
+      b.classList.toggle("on", (editData.tabs || []).includes(b.dataset.tab));
+      b.disabled = true;
+    });
+  } else {
+    document.querySelectorAll("#tab-togs .tog").forEach(b => b.disabled = false);
+  }
+}
+
+function toggleTab(tab){
+  if (!editData) return;
+  const tabs = editData.tabs || [];
+  const idx = tabs.indexOf(tab);
+  if(idx >= 0){ if(tabs.length > 1) tabs.splice(idx, 1); }
+  else tabs.push(tab);
+  editData.tabs = [...tabs];
+  document.querySelectorAll("#tab-togs .tog").forEach(b => {
+    b.classList.toggle("on", (editData.tabs || []).includes(b.dataset.tab));
+  });
+}
+
+function sf(k, v){
+  if (!editData) return;
+  readFormIntoEditData();
+  editData[k] = v;
+  reRenderForm();
+}
+
+function reRenderForm(){
+  if (!editData) return;
+  const c = document.getElementById("sheet-content");
+  c.innerHTML = renderEditForm(editData, mode === "new");
+  attachEditListeners();
+}
+
+function readFormIntoEditData(){
+  if (!editData) return;
+  const np = document.getElementById("f-np"); if(np) editData[t.nameKey] = np.value;
+  const ns = document.getElementById("f-ns"); if(ns) editData[t.nameSecKey] = ns.value;
+  const fd = document.getElementById("f-dose"); if(fd) editData.dose = fd.value;
+  document.querySelectorAll("[data-time-idx]").forEach(el => {
+    const i = parseInt(el.dataset.timeIdx); if(editData.times) editData.times[i] = el.value;
+  });
+}
+
+function cancelEdit(){ 
+  if(mode === "new"){ closeSheet(); return; } 
+  mode = "view"; 
+  editData = null; 
+  renderSheet(); 
+}
+
+async function saveEdit(){
+  if (!editData) return;
+  
+  readFormIntoEditData();
+  
+  const filled = editData.times.filter(Boolean);
+  if(filled.length) editData.tabs = tabsFromTimes(filled);
+  
+  await saveMed(editData);
+  
+  mode = "view";
+  editData = null;
+  closeSheet();
+}
+
+// ── Delete ─────────────────────────────────────────────────────────────
+function deleteMed(){
+  const med = meds.find(m => m.id === selectedId);
+  document.getElementById("d-title").textContent = t.deleteBtn;
+  document.getElementById("d-sub").textContent = med ? med[t.nameKey] : "";
+  document.getElementById("d-cancel-btn").textContent = t.cancel;
+  document.getElementById("d-confirm-btn").textContent = t.deleteBtn;
+  document.getElementById("delete-confirm").classList.add("open");
+}
+
+function closeDeleteConfirm(){ document.getElementById("delete-confirm").classList.remove("open"); }
+
+async function confirmDelete(){ 
+  if (selectedId) {
+    await deleteMed(selectedId);
+  }
+  closeDeleteConfirm(); 
+  closeSheet(); 
+}
+
+// ── Image Handling ─────────────────────────────────────────────────────
+function compressImage(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+      const img = new Image();
+      img.onload = function() {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        
+        const maxSize = 800;
+        if (width > height && width > maxSize) {
+          height = (height * maxSize) / width;
+          width = maxSize;
+        } else if (height > maxSize) {
+          width = (width * maxSize) / height;
+          height = maxSize;
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        const compressed = canvas.toDataURL('image/jpeg', 0.7);
+        resolve(compressed);
+      };
+      img.src = ev.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function handleImageFile(e) {
+  const file = e.target.files[0];
+  if (!file || !editData) return;
+  
+  compressImage(file).then(compressedImage => {
+    editData.image = compressedImage;
+    
+    const bi = document.getElementById('banner-img');
+    const bw = document.getElementById('banner-icon-wrap');
+    if (bi) {
+      bi.src = compressedImage;
+      bi.style.display = 'block';
+    }
+    if (bw) bw.style.display = 'none';
+    
+    reRenderForm();
+  });
+  
+  e.target.value = '';
+}
+
+// ── Init ───────────────────────────────────────────────────────────────
+applyLang();
+setTab(activeTab);
+loadMeds();
+</script>
+</body>
+</html>
