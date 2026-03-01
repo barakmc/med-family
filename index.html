@@ -133,7 +133,7 @@ svg{display:block;flex-shrink:0;}
         <div id="logo-icon">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2cc5a1" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/></svg>
         </div>
-        <div><div id="app-name"></div><div id="app-sub"></div></div>
+        <div><div id="app-name"></div></div>
       </div>
       <div id="lang-toggle" onclick="toggleLang()">
         <button class="lang-opt" id="lang-he">עב</button>
@@ -327,6 +327,7 @@ async function saveMed(med) {
     console.error('Error saving:', error);
   } else {
     console.log('Successfully saved');
+    loadMeds(); // טוען מחדש את הרשימה אחרי שמירה
   }
 }
 
@@ -342,6 +343,7 @@ async function deleteMedFromDB(id) {
     console.error('Error deleting:', error);
   } else {
     console.log('Successfully deleted from database');
+    loadMeds(); // טוען מחדש את הרשימה אחרי מחיקה
   }
 }
 
@@ -352,14 +354,12 @@ function applyLang(){
   document.documentElement.setAttribute("lang", t.lang);
   document.body.style.direction = t.dir;
   document.getElementById("app-name").textContent = t.appName;
-  document.getElementById("app-sub").textContent = t.appSub;
   document.getElementById("lang-he").classList.toggle("active", lang === "he");
   document.getElementById("lang-en").classList.toggle("active", lang === "en");
   document.getElementById("tab-morning-label").textContent = t.morning;
   document.getElementById("tab-noon-label").textContent = t.noon;
   document.getElementById("tab-evening-label").textContent = t.evening;
   document.getElementById("fab-label").textContent = t.addBtn;
-  const gl = document.getElementById("gallery-label"); if(gl) gl.textContent = "🖼 " + t.fTimes;
   renderList();
   if(selectedId !== null) renderSheet();
 }
@@ -750,7 +750,6 @@ async function confirmDelete() {
       alert('שגיאה במחיקה: ' + error.message);
     } else {
       console.log('Successfully deleted');
-      // Close the sheet after successful deletion
       closeSheet();
     }
   } catch (err) {
