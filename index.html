@@ -327,7 +327,10 @@ async function saveMed(med) {
     console.error('Error saving:', error);
   } else {
     console.log('Successfully saved');
-    loadMeds(); // טוען מחדש את הרשימה אחרי שמירה
+    // מחכה 100 מילישניות ואז טוען מחדש
+    setTimeout(() => {
+      loadMeds();
+    }, 100);
   }
 }
 
@@ -343,7 +346,10 @@ async function deleteMedFromDB(id) {
     console.error('Error deleting:', error);
   } else {
     console.log('Successfully deleted from database');
-    loadMeds(); // טוען מחדש את הרשימה אחרי מחיקה
+    // מחכה 100 מילישניות ואז טוען מחדש
+    setTimeout(() => {
+      loadMeds();
+    }, 100);
   }
 }
 
@@ -750,6 +756,7 @@ async function confirmDelete() {
       alert('שגיאה במחיקה: ' + error.message);
     } else {
       console.log('Successfully deleted');
+      await deleteMedFromDB(selectedId);
       closeSheet();
     }
   } catch (err) {
