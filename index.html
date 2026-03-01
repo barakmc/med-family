@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
 <meta name="apple-mobile-web-app-title" content="תרופות"/>
-<title>תרופות</title>
+<title>תרופות שיתופי</title>
 <style>
 :root{--green:#2cc5a1;--green-bg:#edfaf6;--dark:#111;--mid:#666;--soft:#AAA;--border:#EBEBEB;--card-bg:#fff;--page-bg:#F7F8FA;}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
@@ -177,10 +177,12 @@ svg{display:block;flex-shrink:0;}
       <div id="img-actions">
         <label class="img-label">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          <span>📷 צלם</span>
           <input type="file" accept="image/*" capture="environment" onchange="handleImageFile(event)"/>
         </label>
         <label class="img-label">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+          <span id="gallery-label">🖼 גלריה</span>
           <input type="file" accept="image/*" onchange="handleImageFile(event)"/>
         </label>
       </div>
@@ -216,14 +218,14 @@ const PASSCODE = "1234";
 const T = {
   he:{
     dir:"rtl",lang:"he",
-    appName:"",appSub:"",
+    appName:"תרופות שיתופי",appSub:"משותף למשפחה",
     morning:"בוקר",noon:"צהריים",evening:"ערב",
     sectionDate:(d)=>d.toLocaleDateString("he-IL",{weekday:"long",day:"numeric",month:"long"}),
     empty:"אין תרופות לזמן זה",emptySub:"הוסף תרופה חדשה",
     editBtn:"עריכה",addBtn:"הוסף תרופה",
     timeLabel:"שעות נטילה",doseLabel:"מינון",intakeLabel:"מצב נטילה",
     stomachEmpty:"על בטן ריקה",stomachFull:"עם אוכל",stomachAfter:"אחרי אוכל",
-    pinTitle:"הזן סיסמה",pinHint:"Enter 4-digit passcode",
+    pinTitle:"הזן סיסמה",pinHint:"הכנס 4 ספרות",
     pinCancel:"ביטול",pinWrong:"סיסמה שגויה",
     editHeading:"עריכת תרופה",addHeading:"תרופה חדשה",
     fNamePrimary:"שם בעברית",fNameSecondary:"שם באנגלית",
@@ -234,7 +236,7 @@ const T = {
   },
   en:{
     dir:"ltr",lang:"en",
-    appName:"",appSub:"",
+    appName:"Family Meds",appSub:"Shared with family",
     morning:"Morning",noon:"Noon",evening:"Evening",
     sectionDate:(d)=>d.toLocaleDateString("en-US",{weekday:"long",day:"numeric",month:"long"}),
     empty:"No medications",emptySub:"Add a new medication",
@@ -290,6 +292,7 @@ let selectedId = null, editData = null, mode = "view";
 
 // ── Load from Supabase ─────────────────────────────────────────────────
 async function loadMeds() {
+  console.log('Loading medications from Supabase...');
   const { data, error } = await supabaseClient
     .from('medications')
     .select('*');
@@ -300,6 +303,7 @@ async function loadMeds() {
   }
   
   meds = data || [];
+  console.log('Loaded meds:', meds);
   renderList();
 }
 
@@ -307,26 +311,40 @@ async function loadMeds() {
 supabaseClient
   .channel('medications')
   .on('postgres_changes', { event: '*', schema: 'public', table: 'medications' }, 
-    () => { loadMeds(); }
+    (payload) => { 
+      console.log('Real-time update:', payload);
+      loadMeds(); 
+    }
   )
   .subscribe();
 
 // ── Save to Supabase ───────────────────────────────────────────────────
 async function saveMed(med) {
+  console.log('Saving medication:', med);
   const { error } = await supabaseClient
     .from('medications')
     .upsert(med);
   
-  if (error) console.error('Error saving:', error);
+  if (error) {
+    console.error('Error saving:', error);
+  } else {
+    console.log('Successfully saved');
+  }
 }
 
-async function deleteMed(id) {
+async function deleteMedFromDB(id) {
+  console.log('Deleting medication with id:', id, 'type:', typeof id);
+  
   const { error } = await supabaseClient
     .from('medications')
     .delete()
     .eq('id', id);
   
-  if (error) console.error('Error deleting:', error);
+  if (error) {
+    console.error('Error deleting:', error);
+  } else {
+    console.log('Successfully deleted from database');
+  }
 }
 
 // ── Language ───────────────────────────────────────────────────────────
@@ -379,8 +397,8 @@ function renderList(){
       <div class="med-accent"></div>
       <div class="med-icon-wrap">${m.image ? `<img src="${m.image}" alt=""/>` : IC.pill("#888", 24)}</div>
       <div class="med-body">
-        <div class="med-name">${m[t.nameKey]}</div>
-        <div class="med-dose-line">${m[t.nameSecKey]} · ${m.dose}</div>
+        <div class="med-name">${m[t.nameKey] || ''}</div>
+        <div class="med-dose-line">${m[t.nameSecKey] || ''} · ${m.dose || ''}</div>
         <div class="med-tags">
           ${displayTimes.map(ti => `<span class="tag tag-time">${IC.clock} ${ti}</span>`).join("")}
           <span class="tag tag-stomach">${stomachIcon(m.stomach)} ${stomachLabel(m.stomach)}</span>
@@ -391,26 +409,42 @@ function renderList(){
 }
 
 // ── Sheet ──────────────────────────────────────────────────────────────
-function openCard(id){ selectedId = id; mode = "view"; showSheet(); }
+function openCard(id){ 
+  console.log('openCard - id:', id, 'type:', typeof id);
+  selectedId = id; 
+  mode = "view"; 
+  showSheet(); 
+}
 
 function openNew(){
+  console.log('Opening new medication form');
   selectedId = null;
   const newId = Date.now();
   editData = {id: newId, nameHe: "", nameEn: "", times: ["08:00"], tabs: ["morning"], dose: "", stomach: "empty", image: null};
-  mode = "pin-new"; showSheet();
+  mode = "pin-new"; 
+  showSheet();
 }
 
-function showSheet(){ renderSheet(); document.getElementById("overlay").classList.add("open"); }
+function showSheet(){ 
+  renderSheet(); 
+  document.getElementById("overlay").classList.add("open"); 
+}
 
 function closeSheet(){
   document.getElementById("overlay").classList.remove("open");
-  setTimeout(()=>{ selectedId = null; editData = null; mode = "view"; }, 300);
+  setTimeout(()=>{ 
+    selectedId = null; 
+    editData = null; 
+    mode = "view"; 
+  }, 300);
 }
 
 function overlayClick(e){ if(e.target === document.getElementById("overlay")) closeSheet(); }
 
 function renderSheet(){
   const med = selectedId !== null ? meds.find(m => m.id === selectedId) : null;
+  console.log('renderSheet - selectedId:', selectedId, 'med found:', med, 'mode:', mode);
+  
   const cur = (mode === "edit" || mode === "new") && editData ? editData : med;
   const bi = document.getElementById("banner-img");
   const bw = document.getElementById("banner-icon-wrap");
@@ -438,7 +472,7 @@ function renderView(m){
   const times = m.times || [m.time];
   return `
     <div class="view-hd">
-      <div><div class="view-name">${m[t.nameKey]}</div><div class="view-sub">${m[t.nameSecKey]}</div></div>
+      <div><div class="view-name">${m[t.nameKey] || ''}</div><div class="view-sub">${m[t.nameSecKey] || ''}</div></div>
       <button class="edit-btn" onclick="mode='pin';renderSheet()">${IC.edit} ${t.editBtn}</button>
     </div>
     <div class="detail-row">
@@ -449,7 +483,7 @@ function renderView(m){
     </div>
     <div class="detail-row">
       <div class="detail-ico">${IC.pill_d}</div>
-      <div><div class="detail-label">${t.doseLabel}</div><div class="detail-val">${m.dose}</div></div>
+      <div><div class="detail-label">${t.doseLabel}</div><div class="detail-val">${m.dose || ''}</div></div>
     </div>
     <div class="detail-row">
       <div class="detail-ico">${stomachIcon(m.stomach)}</div>
@@ -503,6 +537,7 @@ function checkPin(){
       if (med) {
         editData = {...med};
         editData.times = [...(editData.times || [editData.time])];
+        console.log('Edit data set:', editData);
       }
       mode = "edit"; 
       renderSheet(); 
@@ -550,15 +585,15 @@ function renderEditForm(d, isNew){
     </div>
     <div class="f-label">${t.fIntake}</div>
     <div class="tog-row">
-      <button class="tog ${d.stomach === 'empty' ? 'on' : ''}" onclick="sf('stomach', 'empty')" type="button">${IC.se} ${t.stomachEmpty}</button>
-      <button class="tog ${d.stomach === 'full' ? 'on' : ''}" onclick="sf('stomach', 'full')" type="button">${IC.sf} ${t.stomachFull}</button>
-      <button class="tog ${d.stomach === 'after' ? 'on' : ''}" onclick="sf('stomach', 'after')" type="button">${IC.sa} ${t.stomachAfter}</button>
+      <button class="tog ${d.stomach === 'empty' ? 'on' : ''}" onclick="setStomach('empty')" type="button">${IC.se} ${t.stomachEmpty}</button>
+      <button class="tog ${d.stomach === 'full' ? 'on' : ''}" onclick="setStomach('full')" type="button">${IC.sf} ${t.stomachFull}</button>
+      <button class="tog ${d.stomach === 'after' ? 'on' : ''}" onclick="setStomach('after')" type="button">${IC.sa} ${t.stomachAfter}</button>
     </div>
     <div class="edit-actions">
       <button class="btn-cancel" onclick="cancelEdit()" type="button">${t.cancel}</button>
       <button class="btn-save" onclick="saveEdit()" type="button">${t.save}</button>
     </div>
-    ${isNew ? "" : `<button class="btn-delete" onclick="deleteMed()" type="button">${IC.trash} ${t.deleteBtn}</button>`}
+    ${isNew ? "" : `<button class="btn-delete" onclick="confirmDeletePrompt()" type="button">${IC.trash} ${t.deleteBtn}</button>`}
   `;
 }
 
@@ -598,6 +633,13 @@ function removeTime(idx){
   }
 }
 
+function setStomach(val) {
+  if (!editData) return;
+  readFormIntoEditData();
+  editData.stomach = val;
+  reRenderForm();
+}
+
 function updateTabsFromTimes(){
   if (!editData) return;
   const filled = editData.times.filter(Boolean);
@@ -622,13 +664,6 @@ function toggleTab(tab){
   document.querySelectorAll("#tab-togs .tog").forEach(b => {
     b.classList.toggle("on", (editData.tabs || []).includes(b.dataset.tab));
   });
-}
-
-function sf(k, v){
-  if (!editData) return;
-  readFormIntoEditData();
-  editData[k] = v;
-  reRenderForm();
 }
 
 function reRenderForm(){
@@ -670,24 +705,62 @@ async function saveEdit(){
   closeSheet();
 }
 
-// ── Delete ─────────────────────────────────────────────────────────────
-function deleteMed(){
+// ── Delete confirmation ─────────────────────────────────────────────
+function confirmDeletePrompt() {
+  console.log('confirmDeletePrompt - selectedId:', selectedId);
+  console.log('meds array:', meds);
+  
   const med = meds.find(m => m.id === selectedId);
+  console.log('Found med:', med);
+  
+  if (!med) {
+    console.error('Medication not found with id:', selectedId);
+    alert('שגיאה: התרופה לא נמצאה');
+    return;
+  }
+  
   document.getElementById("d-title").textContent = t.deleteBtn;
-  document.getElementById("d-sub").textContent = med ? med[t.nameKey] : "";
+  document.getElementById("d-sub").textContent = med[t.nameKey] || med.nameHe || med.nameEn || '';
   document.getElementById("d-cancel-btn").textContent = t.cancel;
   document.getElementById("d-confirm-btn").textContent = t.deleteBtn;
   document.getElementById("delete-confirm").classList.add("open");
 }
 
-function closeDeleteConfirm(){ document.getElementById("delete-confirm").classList.remove("open"); }
+function closeDeleteConfirm() { 
+  document.getElementById("delete-confirm").classList.remove("open"); 
+}
 
-async function confirmDelete(){ 
-  if (selectedId) {
-    await deleteMed(selectedId);
+async function confirmDelete() { 
+  console.log('confirmDelete - selectedId:', selectedId);
+  
+  if (!selectedId) {
+    console.error('No selectedId found');
+    closeDeleteConfirm();
+    return;
   }
+  
+  try {
+    console.log('Deleting medication with id:', selectedId, 'type:', typeof selectedId);
+    
+    const { error } = await supabaseClient
+      .from('medications')
+      .delete()
+      .eq('id', selectedId);
+    
+    if (error) {
+      console.error('Error deleting:', error);
+      alert('שגיאה במחיקה: ' + error.message);
+    } else {
+      console.log('Successfully deleted');
+      // Close the sheet after successful deletion
+      closeSheet();
+    }
+  } catch (err) {
+    console.error('Exception:', err);
+    alert('שגיאה: ' + err.message);
+  }
+  
   closeDeleteConfirm(); 
-  closeSheet(); 
 }
 
 // ── Image Handling ─────────────────────────────────────────────────────
